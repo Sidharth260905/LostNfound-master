@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Found Item</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav>
+        <div class="logo">Lost N Found</div>
+        <a href="index.html">HOME</a>
+    </nav>
+
+    <!-- Lost Item Form -->
+    <div class="form-container">
+        <h2>Report a Found Item</h2>
+        <form id="lostForm">
+            <label for="itemName">ITEM NAME:</label>
+            <input type="text" id="itemName" name="itemName" required>
+
+            <label for="color">COLOR:</label>
+            <input type="text" id="color" name="color" required>
+
+            <label for="location">LOCATION:</label>
+            <input type="text" id="location" name="location" required>
+
+            <label for="description">DESCRIPTION (optional):</label>
+            <textarea id="description" name="description" placeholder="Describe the found item..."></textarea>
+
+            <button type="submit" style="background-color: blue;">SUBMIT FOUND ITEM</button>
+        </form>
+    </div>
+
+    <script>
+        const lostForm = document.getElementById('lostForm');
+
+        // Listen for form submission
+        lostForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            // Get form data
+            const itemName_found = document.getElementById('itemName').value;
+            const color_found = document.getElementById('color').value;
+            const location_found = document.getElementById('location').value;
+            const description_found = document.getElementById('description').value || "No description provided.";
+
+            // Create the payload to send to the server
+            const foundItemData = {
+                itemName: itemName_found,
+                color: color_found,
+                location: location_found,
+                description: description_found
+            };
+
+            // Send the data to the server
+            fetch('http://localhost:3000/report-lost-item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(foundItemData) // Send data as JSON
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Error reporting found item') });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message); // Show success message
+                lostForm.reset(); // Reset form fields
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`Error reporting found item: ${error.message || "Unknown error."}`);
+            });
+        });
+    </script>
+</body>
+</html>

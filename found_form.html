@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Found Item - Lost N Found</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Modern Navbar -->
+    <nav>
+        <div class="logo-container">
+            <img src="images-removebg-preview.png" alt="Lost N Found Logo">
+            <div class="logo">Lost N Found</div>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">HOME</a>
+            <a href="lost.html">REPORT LOST ITEM</a>
+            <a href="found.html">SEARCH FOUND ITEMS</a>
+            <a href="found_form.html">REPORT FOUND ITEM</a>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Report a Found Item</h1>
+        <p>Help someone get their belongings back! Report items you've found on campus.</p>
+    </div>
+
+    <!-- Modern Found Item Form -->
+    <div class="form-container">
+        <h2>Found Item Details</h2>
+        <form id="foundForm">
+            <div class="form-group">
+                <label for="foundItemName">Item Name</label>
+                <input type="text" id="foundItemName" name="foundItemName" placeholder="e.g., iPhone, Wallet, Keys" required>
+            </div>
+
+            <div class="form-group">
+                <label for="foundColor">Color</label>
+                <input type="text" id="foundColor" name="foundColor" placeholder="e.g., Black, Blue, Red" required>
+            </div>
+
+            <div class="form-group">
+                <label for="foundLocation">Location Found</label>
+                <input type="text" id="foundLocation" name="foundLocation" placeholder="e.g., Library, H-Block Room 606" required>
+            </div>
+
+            <div class="form-group">
+                <label for="foundDescription">Description</label>
+                <textarea id="foundDescription" name="foundDescription" placeholder="Provide details about the found item that might help identify the owner..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="finderContact">Your Contact Information</label>
+                <input type="text" id="finderContact" name="finderContact" placeholder="Email or phone number so the owner can reach you" required>
+            </div>
+
+            <div class="form-group">
+                <label for="foundImage">Upload Image (Optional)</label>
+                <input type="file" id="foundImage" name="foundImage" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn">Report Found Item</button>
+        </form>
+    </div>
+
+    <!-- Success/Error Message -->
+    <div id="messageContainer" style="display: none;"></div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2024 Lost N Found. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Us</a>
+            </div>
+            <div class="social-icons">
+                <a href="https://www.facebook.com/?_rdr"><img src="facebook_logos_PNG19754.png" alt="Facebook"></a>
+                <a href="https://x.com/i/flow/login?input_flow_data=%7B%22requested_variant%22%3A%22eyJteCI6IjIifQ%3D%3D%22%7D"><img src="images.png" alt="X"></a>
+                <a href="https://www.instagram.com/accounts/login/?hl=en"><img src="instagram-icon-logo-748850.webp" alt="Instagram"></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const foundForm = document.getElementById('foundForm');
+        const messageContainer = document.getElementById('messageContainer');
+
+        function showMessage(message, type) {
+            messageContainer.innerHTML = `<div class="message ${type}">${message}</div>`;
+            messageContainer.style.display = 'block';
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                messageContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        // Listen for form submission
+        foundForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Show loading state
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<span class="loading"></span> Reporting Item...';
+            submitBtn.disabled = true;
+
+            // Get form data
+            const foundItemData = {
+                itemName: document.getElementById('foundItemName').value.trim(),
+                color: document.getElementById('foundColor').value.trim(),
+                location: document.getElementById('foundLocation').value.trim(),
+                description: document.getElementById('foundDescription').value.trim() || "No description provided.",
+                finderContact: document.getElementById('finderContact').value.trim()
+            };
+
+            // Send the data to the server
+            fetch('/api/report-found-item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(foundItemData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Error reporting found item') });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessage('✅ ' + data.message, 'success');
+                foundForm.reset();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('❌ Error: ' + (error.message || "Unknown error occurred. Please try again."), 'error');
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>

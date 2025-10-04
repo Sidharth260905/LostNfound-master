@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Lost Item - Lost N Found</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Modern Navbar -->
+    <nav>
+        <div class="logo-container">
+            <img src="images-removebg-preview.png" alt="Lost N Found Logo">
+            <div class="logo">Lost N Found</div>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">HOME</a>
+            <a href="lost.html">REPORT LOST ITEM</a>
+            <a href="found.html">SEARCH FOUND ITEMS</a>
+            <a href="https://mserp.kiet.edu/iitmsv4eGq0RuNHb0G5WbhLmTKLmTO7YBcJ4RHuXxCNPvuIw=?enc=EGbCGWnlHNJ/WdgJnKH8DA==">SIGN IN</a>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Report a Lost Item</h1>
+        <p>Help us help you find your lost belongings. Fill out the form below with as much detail as possible.</p>
+    </div>
+
+    <!-- Modern Lost Item Form -->
+    <div class="form-container">
+        <h2>Item Details</h2>
+        <form id="lostForm">
+            <div class="form-group">
+                <label for="itemName">Item Name</label>
+                <input type="text" id="itemName" name="itemName" placeholder="e.g., iPhone, Wallet, Keys" required>
+            </div>
+
+            <div class="form-group">
+                <label for="color">Color</label>
+                <input type="text" id="color" name="color" placeholder="e.g., Black, Blue, Red" required>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Last Known Location</label>
+                <input type="text" id="location" name="location" placeholder="e.g., Library, H-Block Room 606" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" placeholder="Provide any additional details that might help identify your item..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="image">Upload Image (Optional)</label>
+                <input type="file" id="image" name="image" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn">Report Lost Item</button>
+        </form>
+    </div>
+
+    <!-- Success/Error Message -->
+    <div id="messageContainer" style="display: none;"></div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2024 Lost N Found. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Us</a>
+            </div>
+            <div class="social-icons">
+                <a href="https://www.facebook.com/?_rdr"><img src="facebook_logos_PNG19754.png" alt="Facebook"></a>
+                <a href="https://x.com/i/flow/login?input_flow_data=%7B%22requested_variant%22%3A%22eyJteCI6IjIifQ%3D%3D%22%7D"><img src="images.png" alt="X"></a>
+                <a href="https://www.instagram.com/accounts/login/?hl=en"><img src="instagram-icon-logo-748850.webp" alt="Instagram"></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const lostForm = document.getElementById('lostForm');
+        const messageContainer = document.getElementById('messageContainer');
+
+        function showMessage(message, type) {
+            messageContainer.innerHTML = `<div class="message ${type}">${message}</div>`;
+            messageContainer.style.display = 'block';
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                messageContainer.style.display = 'none';
+            }, 5000);
+        }
+
+        // Listen for form submission
+        lostForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Show loading state
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<span class="loading"></span> Reporting Item...';
+            submitBtn.disabled = true;
+
+            // Get form data
+            const itemName = document.getElementById('itemName').value.trim();
+            const color = document.getElementById('color').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const description = document.getElementById('description').value.trim() || "No description provided.";
+
+            // Create the payload to send to the server
+            const lostItemData = {
+                itemName: itemName,
+                color: color,
+                location: location,
+                description: description
+            };
+
+            // Send the data to the server
+            fetch('/api/report-lost-item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(lostItemData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Error reporting lost item') });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessage('✅ ' + data.message, 'success');
+                lostForm.reset();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('❌ Error: ' + (error.message || "Unknown error occurred. Please try again."), 'error');
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>

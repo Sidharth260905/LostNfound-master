@@ -1,0 +1,4 @@
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+Connected to MySQL database: lost_and_found
+Database is ready.
+Server is running on port 3000

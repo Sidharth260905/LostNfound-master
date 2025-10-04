@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Found Items - Lost N Found</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Modern Navbar -->
+    <nav>
+        <div class="logo-container">
+            <img src="images-removebg-preview.png" alt="Lost N Found Logo">
+            <div class="logo">Lost N Found</div>
+        </div>
+        <div class="nav-links">
+            <a href="index.html">HOME</a>
+            <a href="lost.html">REPORT LOST ITEM</a>
+            <a href="found.html">SEARCH FOUND ITEMS</a>
+            <a href="found_form.html">REPORT FOUND ITEM</a>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>Search Found Items</h1>
+        <p>Looking for something you lost? Search through recently found items on campus.</p>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-container">
+        <h2>Search Lost Items Database</h2>
+        
+        <div class="search-bar">
+            <input type="text" id="search" placeholder="Search by item name, color, or location..." aria-label="Search for found items">
+            <button id="search-button" class="search-btn">Search</button>
+        </div>
+        
+        <div id="results" class="items-grid"></div>
+        
+        <!-- Recent Searches -->
+        <div id="recent-searches-section" style="margin-top: 40px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px;">Recent Searches</h3>
+            <ul id="recent-searches" style="list-style: none; padding: 0;">
+                <!-- Recent searches will be displayed here -->
+            </ul>
+        </div>
+
+        <!-- Recently Reported Lost Items -->
+        <div style="margin-top: 50px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 30px; text-align: center;">Recently Reported Lost Items</h3>
+            <div id="recent-items" class="items-grid">
+                <!-- Recent items will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2024 Lost N Found. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Us</a>
+            </div>
+            <div class="social-icons">
+                <a href="https://www.facebook.com/?_rdr"><img src="facebook_logos_PNG19754.png" alt="Facebook"></a>
+                <a href="https://x.com/i/flow/login?input_flow_data=%7B%22requested_variant%22%3A%22eyJteCI6IjIifQ%3D%3D%22%7D"><img src="images.png" alt="X"></a>
+                <a href="https://www.instagram.com/accounts/login/?hl=en"><img src="instagram-icon-logo-748850.webp" alt="Instagram"></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Search and display functionality
+        const searchInput = document.getElementById('search');
+        const searchButton = document.getElementById('search-button');
+        const resultsContainer = document.getElementById('results');
+        const recentSearchesList = document.getElementById('recent-searches');
+        const recentItemsContainer = document.getElementById('recent-items');
+
+        // Load recent lost items from database
+        function loadRecentItems() {
+            fetch('/api/recent-lost-items')
+                .then(response => response.json())
+                .then(items => {
+                    displayItems(items, recentItemsContainer);
+                })
+                .catch(error => {
+                    console.error('Error loading recent items:', error);
+                    recentItemsContainer.innerHTML = '<p style="text-align: center; color: #666;">Unable to load recent items.</p>';
+                });
+        }
+
+        // Display items in a container
+        function displayItems(items, container) {
+            if (!items || items.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; grid-column: 1 / -1;">No items found.</p>';
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="item-card">
+                    <h3>${item.item_name}</h3>
+                    <p><strong>Color:</strong> ${item.color}</p>
+                    <p><strong>Location:</strong> ${item.location}</p>
+                    <p><strong>Description:</strong> ${item.description}</p>
+                    <div class="item-meta">
+                        <span class="item-date">Reported: ${new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search functionality
+        function performSearch() {
+            const query = searchInput.value.trim();
+            if (!query) {
+                alert('Please enter a search term');
+                return;
+            }
+
+            // Show loading state
+            searchButton.innerHTML = '<span class="loading"></span> Searching...';
+            searchButton.disabled = true;
+            resultsContainer.innerHTML = '<div style="text-align: center; padding: 40px;"><span class="loading"></span> Searching database...</div>';
+
+            // Add to recent searches
+            addToRecentSearches(query);
+
+            // Simulate API search (replace with actual endpoint when available)
+            fetch('/api/search-lost-items?q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(items => {
+                    displayItems(items, resultsContainer);
+                })
+                .catch(error => {
+                    console.error('Error searching:', error);
+                    resultsContainer.innerHTML = '<p style="text-align: center; color: #666; grid-column: 1 / -1;">Search temporarily unavailable. Please try again later.</p>';
+                })
+                .finally(() => {
+                    searchButton.textContent = 'Search';
+                    searchButton.disabled = false;
+                });
+        }
+
+        // Add search term to recent searches
+        function addToRecentSearches(query) {
+            let recentSearches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+            
+            // Remove if already exists and add to beginning
+            recentSearches = recentSearches.filter(search => search !== query);
+            recentSearches.unshift(query);
+            
+            // Keep only last 5 searches
+            recentSearches = recentSearches.slice(0, 5);
+            
+            localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+            updateRecentSearchesDisplay();
+        }
+
+        // Update recent searches display
+        function updateRecentSearchesDisplay() {
+            const recentSearches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+            
+            if (recentSearches.length === 0) {
+                recentSearchesList.innerHTML = '<li style="color: #666; font-style: italic;">No recent searches</li>';
+                return;
+            }
+
+            recentSearchesList.innerHTML = recentSearches.map(search => 
+                `<li style="margin-bottom: 10px;">
+                    <button onclick="searchInput.value='${search}'; performSearch();" 
+                            style="background: none; border: 1px solid #ddd; padding: 8px 16px; border-radius: 20px; cursor: pointer; color: #666;">
+                        ${search}
+                    </button>
+                </li>`
+            ).join('');
+        }
+
+        // Event listeners
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // Initialize page
+        updateRecentSearchesDisplay();
+        loadRecentItems();
+    </script>
+</body>
+</html>
